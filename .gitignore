@@ -1,0 +1,18 @@
+# 依赖与运行产物
+node_modules/
+*.log
+
+# 开发过程的中间产物：截图、放大对照图、调试脚本、临时日志
+# 例外：frames.json 是 tools/build_manifest.py 的输入，必须跟着仓库走
+work/*
+!work/frames.json
+
+# 编码事故留下的损坏参考件（乱码，不是源码，见 README「踩过的坑」）
+work/main.recovered.js
+
+# 打包产物
+*.tgz
+
+# Windows
+Thumbs.db
+desktop.ini
