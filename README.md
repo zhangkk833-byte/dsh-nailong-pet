@@ -16,23 +16,42 @@
 
 ## 安装
 
-### 装到 DeepSeek Harness
+三种装法，挑一种就行。装完**重启 DeepSeek Harness**，奶龙会跟着一起起来。
 
-插件包发布在 [Releases](https://github.com/zhangkk833-byte/dsh-nailong-pet/releases)。
-安装链接就是那个 `.tgz` 的直链：
+### 方式一：下载安装包，双击就装（推荐）
+
+去 [Releases](https://github.com/zhangkk833-byte/dsh-nailong-pet/releases) 下载
+`nailong-pet-installer-v0.1.0.zip`：
+
+```
+https://github.com/zhangkk833-byte/dsh-nailong-pet/releases/download/v0.1.0/nailong-pet-installer-v0.1.0.zip
+```
+
+解压整个文件夹，双击 `安装.bat`，看到 `[OK] 装好了！` 就成了。脚本会自己找 DSH 主目录和
+profile，把插件包复制进去、登记 bundle、跑 `pnpm install`，并在动手前把 `package.json`
+备份成 `package.json.nailong-backup`。后悔了双击 `卸载.bat` 即可。
+
+包里还带了兜底：插件要靠 `$DSH_HOME/electron/electron.exe`，而那目录是装了别的宠物插件才会
+有的，新机器上可能是空的 —— 这时脚本会自己从 npmmirror（失败退 GitHub）拉一份 Electron。
+大约 144 MB，30 秒左右。
+
+> `安装.bat` 本身是**纯 ASCII** 的，它先 `chcp 65001` 再把活交给 `install.mjs`，中文提示全部
+> 由后者输出 —— 这样对方控制台无论什么代码页都不会乱码。
+
+### 方式二：把 `.tgz` 直链交给插件管理器
 
 ```
 https://github.com/zhangkk833-byte/dsh-nailong-pet/releases/download/v0.1.0/dsh-nailong-pet-0.1.0.tgz
 ```
 
 把它当作安装 spec 交给 DSH 的插件管理器（**设置 → 插件**，或者让 Harness 里的 agent
-用它的 plugin manager 装这个地址）就能装上。装完刷新页面，奶龙会跟着 DSH 一起启动。
+用它的 plugin manager 装这个地址）就能装上。
 
 > **注意**：社区市场（Settings → Plugin Market）只收录 `awesome-dsh-plugin` 精选表里的
 > 条目，直接粘 URL 会被它拒绝。想上架市场得去
 > [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 提 PR。
 
-### 从源码跑
+### 方式三：从源码跑
 
 ```bash
 git clone https://github.com/zhangkk833-byte/dsh-nailong-pet.git
