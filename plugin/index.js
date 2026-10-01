@@ -7,8 +7,9 @@
  *   3. 注册一条本机 HTTP 路由，给 Web 半（client.js 的按钮）和外部脚本用。
  *
  * 两个必须照做的细节（都是 DSH 生态里踩出来的）：
- *   - 不能用 `ctx.subprocess.spawn`：那个服务销毁时会terminate 并 await 所有受管子进程，
- *     等于插件一卸载奶龙就被杀。用 node:child_process 自己 spawn。
+ *   - 用 node:child_process 自己 spawn，不用 `ctx.subprocess.spawn`：那个服务销毁时会
+ *     terminate 并 await 所有受管子进程，会把 DSH 的退出拖住；自己 spawn 才能精确决定
+ *     什么时候收、收的是哪一只（见 reap）。
  *   - spawn 之前必须把 `ELECTRON_RUN_AS_NODE` 从 env 里**删掉**（不是置空）。
  *     置空会让 Electron 以 134 崩掉；'0'/'false'/'1' 都会让它进纯 Node 模式。
  *     DSH Desktop 自己的进程里就带着这个变量。
@@ -101,6 +102,28 @@ export function apply(ctx, config = {}) {
     try { c.kill(); } catch (_) { /* 已经退了 */ }
     log('info', `奶龙已收工（${reason}）`);
     return true;
+  }
+
+  /**
+   * 收掉奶龙 —— 卸载插件、DSH 退出时都走这里。
+   *
+   * 先杀本会话 spawn 的那个子进程。但 `child` 经常是空的：奶龙可能是上一次 DSH
+   * 留下的、或者你自己双击过那个独立启动的 .bat，进程句柄根本不在我们手里 ——
+   * 这时光靠 `child.kill()` 什么也收不掉（用户看到的现象就是「插件都取消了，
+   * 奶龙还在桌面上」）。
+   *
+   * 兜底办法是顺着控制通道请它自己退出。control.json 写在奶龙自己的配置目录
+   * （%APPDATA%/nailong-desktop-pet）里，能连上就说明那确实是我们这只奶龙，
+   * 不会误伤别人的程序。
+   */
+  async function reap(reason) {
+    if (stop(reason)) return true;
+    const r = await control('/quit');
+    if (r && r.ok) {
+      log('info', `奶龙已收工（${reason}·常驻进程）`);
+      return true;
+    }
+    return false;
   }
 
   function start() {
@@ -208,6 +231,6 @@ export function apply(ctx, config = {}) {
   // ---- 3. 跟着 DSH 起停 ----
   ctx.effect(() => {
     if (autoStart) start();
-    return () => { stop('插件卸载'); };
+    return () => { void reap('插件卸载'); };
   }, 'nailong-pet: electron lifecycle');
 }
